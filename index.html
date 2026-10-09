@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phần Mềm Luyện Tập Tính pH</title>
+    <style>
+        /* Thiết lập giao diện chung */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+
+        /* Chia 3 cột */
+        .col {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+        }
+
+        /* Màu sắc 3 khu vực phù hợp giới trẻ 18-20 */
+        #left-col { background-color: #e0f7fa; border-right: 2px dashed #b2ebf2; } /* Xanh lơ nhạt */
+        #mid-col { background-color: #fff9c4; position: relative; } /* Vàng pastel */
+        #right-col { background-color: #fce4ec; border-left: 2px dashed #f8bbd0; } /* Hồng pastel */
+
+        h2 {
+            text-align: center;
+            font-size: 1.4rem;
+            color: #444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        /* Card bài tập và công thức */
+        .card {
+            background: #fff;
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.1); }
+        .card.active { border-color: #00bcd4; background-color: #e0f2f1; }
+
+        .formula-card {
+            background: #f3e5f5;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #6a1b9a;
+        }
+        .formula-card:hover { background: #e1bee7; }
+
+        /* Khu vực giữa (Làm bài) */
+        .mid-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        #active-question-box { width: 90%; background: #bbdefb; border-radius: 12px; padding: 20px; font-size: 1.2rem; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: none; }
+        #active-formula-box { width: 90%; background: #c8e6c9; border-radius: 12px; padding: 20px; font-size: 1.2rem; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: none; }
+        
+        #feedback {
+            text-align: center; font-size: 1.2rem; font-weight: bold; min-height: 30px; margin-top: 10px;
+        }
+        .error { color: #d32f2f; }
+        .success { color: #2e7d32; }
+
+        /* Input điền số liệu */
+        .input-group {
+            display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 15px; font-size: 1.1rem;
+        }
+        input[type="number"] {
+            padding: 8px 12px; border-radius: 8px; border: 1px solid #ccc; width: 90px; font-size: 1.1rem; outline: none; text-align: center;
+        }
+        input[type="number"]:focus { border-color: #4caf50; box-shadow: 0 0 5px rgba(76, 175, 80, 0.5); }
+
+        #result-box {
+            font-size: 1.8rem; font-weight: bold; color: #1976d2; margin-top: 20px; text-align: center; display: none;
+        }
+
+        /* Animation Hoan hô */
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        .cheer-icons { font-size: 3rem; text-align: center; animation: bounce 0.6s ease 3; margin-top: 10px; display: none; }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <!-- KHU VỰC BÊN TRÁI: DANH SÁCH BÀI TẬP -->
+    <div class="col" id="left-col">
+        <h2>📚 Chọn bài tập</h2>
+        <div class="card question" data-type="strong_acid" onclick="selectQuestion(this, 'strong_acid', 'Bài 1. Tính pH của dung dịch H2SO4 0,05M')">
+            Bài 1. Tính pH của dung dịch H2SO4 0,05M
+        </div>
+        <div class="card question" data-type="strong_base" onclick="selectQuestion(this, 'strong_base', 'Bài 2. Tính pH của dung dịch Ba(OH)2 0,05M')">
+            Bài 2. Tính pH của dung dịch Ba(OH)2 0,05M
+        </div>
+        <div class="card question" data-type="weak_acid" onclick="selectQuestion(this, 'weak_acid', 'Bài 3. Tính pH của dung dịch HCOOH 0,1M (biết pK_HCOOH = 3,75)')">
+            Bài 3. Tính pH của dung dịch HCOOH 0,1M <br><small>(biết pK<sub>HCOOH</sub> = 3,75)</small>
+        </div>
+        <div class="card question" data-type="weak_base" onclick="selectQuestion(this, 'weak_base', 'Bài 4. Tính pH của dung dịch NH3 0,01M (biết pKb = 4,77)')">
+            Bài 4. Tính pH của dung dịch NH3 0,01M <br><small>(biết pK<sub>b</sub> = 4,77)</small>
+        </div>
+    </div>
+
+    <!-- KHU VỰC Ở GIỮA: KHU VỰC LÀM BÀI -->
+    <div class="col" id="mid-col">
+        <h2>✍️ Khu Vực Làm Bài</h2>
+        <div class="mid-container">
+            <div id="active-question-box"></div>
+            
+            <div id="feedback"></div>
+            <div class="cheer-icons" id="cheer-icons">🎉 👏 🎊 🌟</div>
+            
+            <div id="active-formula-box">
+                <div id="formula-text"></div>
+                <div id="inputs-container"></div>
+                <div id="result-box"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KHU VỰC BÊN PHẢI: CÔNG THỨC -->
+    <div class="col" id="right-col">
+        <h2>💡 Công thức</h2>
+        <div class="card formula-card" data-type="strong_acid" onclick="selectFormula(this, 'strong_acid', 'pH = -lg[H+]')">
+            pH = -lg[H+]
+        </div>
+        <div class="card formula-card" data-type="strong_base" onclick="selectFormula(this, 'strong_base', 'pOH = -lg[OH-]')">
+            pOH = -lg[OH-]
+        </div>
+        <div class="card formula-card" data-type="weak_acid" onclick="selectFormula(this, 'weak_acid', 'pH = 1/2 pKa - 1/2 lgC')">
+            pH = 1/2 pK<sub>a</sub> - 1/2 lgC
+        </div>
+        <div class="card formula-card" data-type="weak_base" onclick="selectFormula(this, 'weak_base', 'pH = 14 - 1/2 pKb + 1/2 lgC')">
+            pH = 14 - 1/2 pK<sub>b</sub> + 1/2 lgC
+        </div>
+    </div>
+
+    <!-- Âm thanh -->
+    <audio id="success-sound" src="https://actions.google.com/sounds/v1/crowds/kids_cheering.ogg"></audio>
+    <audio id="error-sound" src="https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg"></audio>
+
+    <script>
+        let currentQuestionType = null;
+
+        // Xử lý khi chọn bài tập bên trái
+        function selectQuestion(element, type, text) {
+            // Reset giao diện
+            document.querySelectorAll('.question').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+            
+            currentQuestionType = type;
+            
+            const qBox = document.getElementById('active-question-box');
+            qBox.innerHTML = text;
+            qBox.style.display = 'block';
+
+            // Xóa phần công thức và kết quả cũ ở giữa
+            document.getElementById('active-formula-box').style.display = 'none';
+            document.getElementById('feedback').innerHTML = '';
+            document.getElementById('cheer-icons').style.display = 'none';
+        }
+
+        // Xử lý khi chọn công thức bên phải
+        function selectFormula(element, type, formulaText) {
+            const feedback = document.getElementById('feedback');
+            const cheerIcons = document.getElementById('cheer-icons');
+            const formulaBox = document.getElementById('active-formula-box');
+            const inputsContainer = document.getElementById('inputs-container');
+            const resultBox = document.getElementById('result-box');
+            const successSound = document.getElementById('success-sound');
+            const errorSound = document.getElementById('error-sound');
+
+            if (!currentQuestionType) {
+                feedback.innerHTML = '<span class="error">⚠️ Hãy chọn một bài tập bên trái trước nhé!</span>';
+                return;
+            }
+
+            // Kiểm tra tính đúng đắn của công thức so với bài tập
+            if (currentQuestionType === type) {
+                // CHỌN ĐÚNG
+                feedback.innerHTML = '<span class="success">Chính xác! Bạn giỏi quá! 👇 Nhập số liệu vào bên dưới nhé.</span>';
+                cheerIcons.style.display = 'block';
+                successSound.currentTime = 0;
+                successSound.play();
+
+                document.getElementById('formula-text').innerHTML = `<strong>Công thức:</strong> ${element.innerHTML}`;
+                formulaBox.style.display = 'block';
+                resultBox.style.display = 'none';
+                
+                // Hiển thị ô nhập liệu tương ứng
+                generateInputs(type, inputsContainer);
+
+            } else {
+                // CHỌN SAI
+                feedback.innerHTML = '<span class="error">❌ Công thức bạn chọn chưa đúng rồi, hãy nghĩ xem đây là loại acid hoặc base nào?</span>';
+                cheerIcons.style.display = 'none';
+                formulaBox.style.display = 'none';
+                errorSound.currentTime = 0;
+                errorSound.play();
+            }
+        }
+
+        // Tạo các ô nhập liệu tùy theo công thức
+        function generateInputs(type, container) {
+            let html = '';
+            if (type === 'strong_acid') {
+                html = `<div class="input-group">
+                            <label>[H+] =</label>
+                            <input type="number" id="val-h" step="0.001" placeholder="Ví dụ: 0.1" oninput="calculateResult('strong_acid')">
+                        </div>`;
+            } else if (type === 'strong_base') {
+                html = `<div class="input-group">
+                            <label>[OH-] =</label>
+                            <input type="number" id="val-oh" step="0.001" placeholder="Ví dụ: 0.1" oninput="calculateResult('strong_base')">
+                        </div>`;
+            } else if (type === 'weak_acid') {
+                html = `<div class="input-group">
+                            <label>pKa =</label> <input type="number" id="val-pka" step="0.01" oninput="calculateResult('weak_acid')">
+                        </div>
+                        <div class="input-group">
+                            <label>C =</label> <input type="number" id="val-c" step="0.001" oninput="calculateResult('weak_acid')">
+                        </div>`;
+            } else if (type === 'weak_base') {
+                html = `<div class="input-group">
+                            <label>pKb =</label> <input type="number" id="val-pkb" step="0.01" oninput="calculateResult('weak_base')">
+                        </div>
+                        <div class="input-group">
+                            <label>C =</label> <input type="number" id="val-c" step="0.001" oninput="calculateResult('weak_base')">
+                        </div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        // Tự động tính toán khi sinh viên nhập xong số liệu
+        function calculateResult(type) {
+            const resultBox = document.getElementById('result-box');
+            let pH = null;
+
+            try {
+                if (type === 'strong_acid') {
+                    const h = parseFloat(document.getElementById('val-h').value);
+                    if (h > 0) pH = -Math.log10(h);
+                } 
+                else if (type === 'strong_base') {
+                    const oh = parseFloat(document.getElementById('val-oh').value);
+                    if (oh > 0) pH = 14 - (-Math.log10(oh));
+                } 
+                else if (type === 'weak_acid') {
+                    const pka = parseFloat(document.getElementById('val-pka').value);
+                    const c = parseFloat(document.getElementById('val-c').value);
+                    if (pka > 0 && c > 0) pH = 0.5 * pka - 0.5 * Math.log10(c);
+                } 
+                else if (type === 'weak_base') {
+                    const pkb = parseFloat(document.getElementById('val-pkb').value);
+                    const c = parseFloat(document.getElementById('val-c').value);
+                    if (pkb > 0 && c > 0) pH = 14 - 0.5 * pkb + 0.5 * Math.log10(c);
+                }
+
+                if (pH !== null && !isNaN(pH)) {
+                    resultBox.innerHTML = `Kết quả: pH = ${pH.toFixed(2)}`;
+                    resultBox.style.display = 'block';
+                } else {
+                    resultBox.style.display = 'none';
+                }
+            } catch (e) {
+                resultBox.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
